@@ -1,30 +1,52 @@
-import { useState } from "react";
+import { useReducer } from "react";
+
+const initialInputState = {
+  value: "",
+  isTouched: false,
+};
+
+const inputStateReducer = (state, action) => {
+  if (action.type === "CHANGE") {
+    return { value: action.payload, isTouched: state.isTouched };
+  } else if (action.type === "RESET") {
+    return {
+      value: "",
+      isTouched: false,
+    };
+  } else if (action.type === "BLUR") {
+    return { value: state.value, isTouched: true };
+  } else if (action.type === "TOUCH") {
+    return { value: state.value, isTouched: false };
+  }
+  return initialInputState;
+};
 
 const useInput = (inputType) => {
-  const [enteredValue, setEnteredValue] = useState("");
-  const [enteredValueTouch, setEnteredValueTouch] = useState(false);
+  const [inputState, dispatchInput] = useReducer(
+    inputStateReducer,
+    initialInputState
+  );
 
   const enteredValueIsValid =
     inputType === "name"
-      ? enteredValue.trim() !== ""
-      : enteredValue.includes("@");
-  const valueInputIsInvalid = !enteredValueIsValid && enteredValueTouch;
+      ? inputState.value.trim() !== ""
+      : inputState.value.includes("@");
+  const valueInputIsInvalid = !enteredValueIsValid && inputState.isTouched;
 
   const valueInputChangeHandler = (event) => {
-    setEnteredValue(event.target.value);
+    dispatchInput({ type: "CHANGE", payload: event.target.value });
   };
 
   const valueInputBlurHandler = () => {
-    setEnteredValueTouch(true);
+    dispatchInput({ type: "BLUR" });
   };
 
   const reset = () => {
-    setEnteredValue("");
-    setEnteredValueTouch(false);
+    dispatchInput({ type: "RESET" });
   };
 
   const touch = () => {
-    setEnteredValueTouch(true);
+    dispatchInput({ type: "TOUCH" });
   };
 
   const valueInputClasses = valueInputIsInvalid
@@ -32,7 +54,7 @@ const useInput = (inputType) => {
     : "form-control";
 
   return {
-    enteredValue,
+    enteredValue: inputState.value,
     valueInputClasses,
     enteredValueIsValid,
     valueInputChangeHandler,
